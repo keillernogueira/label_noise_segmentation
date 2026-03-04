@@ -1,0 +1,17 @@
+numpy==2.2.0
+pillow==11.1.0
+pyyaml==5.4.0
+tqdm==4.67.1
+ipykernel==6.30.0
+torch==2.5.1
+torchvision==0.20.1
+lightning==2.5.2
+torchmetrics==1.6.0
+segmentation-models-pytorch==0.4.0
+building-footprint-segmentation==0.2.4
+albumentations==2.0.8
+opencv-python==4.10.0.84
+scikit-image==0.25.0
+scikit-learn==1.5.2
+tensorboard==2.18.0
+matplotlib==3.10.1

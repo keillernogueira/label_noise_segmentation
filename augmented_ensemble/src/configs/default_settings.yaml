@@ -1,0 +1,59 @@
+data:
+  folder_imgs: '../data/external/dataset/training_patches'
+  folder_labels: '../data/external/dataset/training_noisy_labels'
+  train_batch_size: 16
+  val_batch_size: 32
+  test_batch_size: 32
+  num_workers: 16
+  in_memory: False
+  use_cv_split: False
+  cv_n_splits: 5
+  cv_iter: 0
+  val_size_f: 0.0
+  test_size_f: 0.0
+  use_augmentations: False
+task:
+  seed: 42
+  loss:
+    name: 'BCELoss'
+    args: null
+#  loss:
+#    name: 'AleatoricUQLoss'
+#    args:
+#      alpha: 0.5
+  optimization:
+    optimizer:
+      - name: 'Adam'
+        args:
+          lr: 0.0001
+    lr_schedule: null
+  use_tta: False
+  n_samples_tta: 30
+
+logger:
+  save_dir: '../data/external/experiments/'
+  name: 'refinenet'
+
+trainer:
+  devices: [ 0 ]
+  accelerator: 'gpu'
+  #  limit_train_batches: 8
+  #  limit_val_batches: 4
+  log_every_n_steps: 10
+  max_epochs: 30
+  deterministic: True
+
+model:
+  name: 'ReFineNet'
+  args:
+    weights: 'inria'
+#    weights: null
+#  name: 'Unet'
+#  args:
+#    encoder_name: 'resnet34'
+#    encoder_weights: 'imagenet'
+#    encoder_depth: 5
+#    in_channels: 3
+#    activation: 'sigmoid'
+#    decoder_use_batchnorm: False
+#    decoder_attention_type: null
