@@ -1,9 +1,11 @@
 import logging
 import os
 from pathlib import Path
+import torch
+import argparse
 
 import numpy as np
-import pytorch_lightning as pl
+import lightning as pl
 import yaml
 from torch.utils.data import DataLoader
 
@@ -19,11 +21,11 @@ if 'SLURM_JOB_NAME' in os.environ:
     del os.environ['SLURM_JOB_NAME']
 
 # Logger (console and TensorBoard)
-root_logger = logging.getLogger('pytorch_lightning')
+root_logger = logging.getLogger('lightning')
 root_logger.setLevel(logging.INFO)
 fmt = '[%(levelname)s] - %(asctime)s - %(name)s: %(message)s (%(filename)s:%(funcName)s:%(lineno)d)'
 root_logger.handlers[0].setFormatter(logging.Formatter(fmt))
-logger = logging.getLogger('pytorch_lightning.core')
+logger = logging.getLogger('lightning.core')
 
 
 def test_model(settings, fold, output_dir, checkpoint=None):
@@ -52,7 +54,7 @@ def test_model(settings, fold, output_dir, checkpoint=None):
             task_params=task_params
         )
     else:
-        logger.info(f'No checkpoint provided; using the pretrained model.')
+        logger.info('No checkpoint provided; using the pretrained model.')
 
     # Trainer
     trainer_dict = settings['trainer']
@@ -83,6 +85,34 @@ def test_model(settings, fold, output_dir, checkpoint=None):
     # export the predictions
     trainer.test(model=task, dataloaders=dl)
 
+    results = trainer.predict(model=task, dataloaders=[dl])
+    results = torch.cat(results, 0)
+
+    labels = dl.dataset.fp_labels
+
+    save_path = str(checkpoint).replace(".ckpt", "_predictions")
+
+    from torchvision.utils import save_image  # Or use PIL if needed
+
+    # Create the directory if it doesn't exist
+    os.makedirs(save_path, exist_ok=True)
+
+    for l, r in zip(labels, results):
+        # Extract filename from the original label path
+        filename = os.path.basename(l)
+        filename = os.path.splitext(filename)[0] + "_pred.png"  # or .jpg or any format
+
+        # Create full save path
+        output_file = os.path.join(save_path, filename)
+
+        # Save the result (assuming it's a tensor)
+        if isinstance(r, torch.Tensor):
+            # If r is batched, unbatch it
+            if r.dim() == 4:
+                r = r[0]
+            save_image(r, output_file)
+        else:
+            print(f"Unsupported result type: {type(r)}")
 
 def get_best_model_ckpt(checkpoint_dir, metric_name='val_BinaryF1Score', sort_method='max'):
     checkpoint_dir = Path(checkpoint_dir)
@@ -101,33 +131,39 @@ def get_best_model_ckpt(checkpoint_dir, metric_name='val_BinaryF1Score', sort_me
 
 
 if __name__ == '__main__':
-    test_the_pretrained_model = False
+    parser = argparse.ArgumentParser(description='Test trained models with settings file')
+    parser.add_argument('--settings', type=str, default='configs/default_settings.yaml', help='Path to YAML settings file')
+    parser.add_argument('--fold', type=str, default='train', choices=['train', 'valid', 'test'], help='Which split to run predictions on')
+    parser.add_argument('--version', type=int, default=0, help='Model version number (default: 0)')
+    parser.add_argument('--checkpoint-dir', type=str, default=None, help='Optional explicit checkpoint directory')
+    args = parser.parse_args()
 
-    if test_the_pretrained_model:
-        checkpoint_dir = Path('../data/external/experiments/refinenet/version_pretrained/dummy')
-        settings_fp = './configs/default_settings.yaml'
-        ckpt = None
-    else:
-        checkpoint_dir = Path('../data/external/experiments/refinenet/version_1/checkpoints')
-        settings_fp = checkpoint_dir.parent / 'settings.yaml'
-
-        # get the best model checkpoint
-        ckpt = get_best_model_ckpt(checkpoint_dir)
-
-    with open(settings_fp, 'r') as fp:
+    with open(args.settings, 'r') as fp:
         all_settings = yaml.load(fp, Loader=yaml.FullLoader)
-        logger.info(all_settings)
 
-        if test_the_pretrained_model:
-            # disable the aleatoric uncertainty for the pretrained model
-            all_settings['task']['loss'] = {'name': 'BCELoss', 'args': None}
+    seed_list = all_settings['task']['seed'] if isinstance(all_settings['task']['seed'], list) else [all_settings['task']['seed']]
+    cv_n = all_settings['data'].get('cv_n_splits', 1)
 
-    # test the model on each fold
-    use_no_split = not all_settings['data']['use_cv_split'] and all_settings['data']['val_size_f'] == 0
-    folds = ['train'] if use_no_split else ['train', 'valid', 'test']
-    for fold in folds:
-        # extract the epoch number from the checkpoint name
-        use_tta = all_settings['task']['use_tta']
-        num_samples = 1 if not use_tta else all_settings['task']['num_samples']
-        output_dir = checkpoint_dir.parent / 'results' / f"ckpt_best_tta_{use_tta}_n_{num_samples}" / fold / 'preds'
-        test_model(settings=all_settings, checkpoint=ckpt, fold=fold, output_dir=output_dir)
+    for seed in seed_list:
+        for cv_iter in range(cv_n):
+            if args.checkpoint_dir:
+                checkpoint_dir = Path(args.checkpoint_dir)
+            else:
+                base = Path(all_settings['logger']['save_dir'])
+                name = all_settings['logger']['name']
+                checkpoint_dir = base / name / f"cv_iter_{cv_iter}_seed_{seed}" / f"version_{args.version}" / "checkpoints"
+
+            settings_fp = checkpoint_dir.parent / 'settings.yaml'
+            if not checkpoint_dir.exists():
+                logger.warning(f'Checkpoint dir not found: {checkpoint_dir} — skipping')
+                continue
+
+            ckpt = get_best_model_ckpt(checkpoint_dir, metric_name="train_BinaryF1Score")
+
+            with open(settings_fp, 'r') as fp:
+                run_settings = yaml.load(fp, Loader=yaml.FullLoader)
+
+            use_tta = run_settings['task'].get('use_tta', False)
+            num_samples = 1 if not use_tta else run_settings['task'].get('num_samples', 1)
+            output_dir = checkpoint_dir.parent / 'results' / f"ckpt_best_tta_{use_tta}_n_{num_samples}" / args.fold / 'preds'
+            test_model(settings=run_settings, checkpoint=ckpt, fold=args.fold, output_dir=output_dir)
