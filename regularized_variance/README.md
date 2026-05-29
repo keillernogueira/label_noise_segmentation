@@ -1,38 +1,49 @@
 # Noisy Segmentation for Kaggle challenge
 
 ## Context
+
 [Kaggle Challenge](https://www.kaggle.com/competitions/data-centric-land-cover-classification-challenge-2/overview)
 
-## Data
-Folder structure:
-
-* **data/external**
-    * **dataset**
-        * `noisy_labels`
-        * `image_patches`
-    * **experiments**
-        * `refinetnet/version_0`
-        * `refinetnet/version_1`
-        * ...
-
 ## Getting started
-Get the original dataset (or manually download it from Kaggle and put it in):
+
+Get the original dataset (or manually download it from Kaggle and put it in data/dataset):
+
 ```
-mkdir -p data/external & cd data/external
+mkdir -p data/ & cd data/
 # If you never used Kaggle you will need to get your API key: https://www.kaggle.com/docs/api
 kaggle competitions download -c data-centric-land-cover-classification-challenge
 unzip data-centric-land-cover-classification-challenge.zip
 rm data-centric-land-cover-classification-challenge.zip
 ```
 
-Creating conda environment:
+Get SpaceNet2, and place it under `data/spacenet2`
+
+Install the conda environment for Pangaea (see readme inside the Pangaea directory)
+
+Generate spacenet labels by running `convert_spacenet.py`
+
+###Training:
+
+Tune ScaleMAE by running a Pangaea training with the right config:
+
 ```
-conda create -y -n <your_env> & conda activate <your_env>
-conda install pip
-pip install -r requirements.txt
+TODO instructions
 ```
-Training:
+
+Finetune ScaleMAE on the challenge dataset:
+
 ```
-cd src
-python main_train.py
+TODO instructions
+```
+
+Train overregularized networks:
+
+```
+TODO instructions
+```
+
+Create submission scores:
+
+```
+python calculate_scores.py
 ```

@@ -1,0 +1,11 @@
+train: false
+work_dir: "work-dir"
+seed: 234
+use_wandb: false
+
+
+# EXPERIMENT
+finetune: false
+ckpt_dir: ???
+
+

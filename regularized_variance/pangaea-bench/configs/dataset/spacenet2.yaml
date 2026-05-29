@@ -1,0 +1,40 @@
+_target_: pangaea.datasets.spacenet2.Spacenet2
+dataset_name: Spacenet2
+root_path: ../data/spacenet2
+download_url: null
+auto_download: false
+
+img_size: 640
+multi_temporal: False
+multi_modal: False
+
+# classes
+ignore_index: -1
+num_classes: 2
+classes:
+  - Background
+  - Building
+distribution:
+  - 0.8
+  - 0.2
+
+# data stats
+bands:
+  optical:
+    - B4  # Band 1 (Red)
+    - B3  # Band 2 (Green)
+    - B2  # Band 3 (Blue)
+data_mean:
+  optical:
+    - 330.73296244
+    - 461.53825687 
+    - 355.74918156
+data_std:
+  optical:
+    - 193.30918006 
+    - 222.84175814 
+    - 147.22217091
+data_min:
+  optical: [0.0, 0.0, 0.0]
+data_max:
+  optical: [1813.0, 2029.0, 1451.0]
