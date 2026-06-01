@@ -1,26 +1,14 @@
-import os
-import time 
 import pathlib
-import urllib.request
-import urllib.error
-import zipfile
-
-from glob import glob
-import rasterio
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-
 import warnings
 
-warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
-
+import numpy as np
+import rasterio
 import torch
-import torchvision.transforms.functional as TF
-import torchvision.transforms as T
+from sklearn.model_selection import train_test_split
 
-from pangaea.datasets.utils import DownloadProgressBar
 from pangaea.datasets.base import RawGeoFMDataset
+
+warnings.filterwarnings("ignore", category=rasterio.errors.NotGeoreferencedWarning)
 
 
 class Spacenet2(RawGeoFMDataset):
@@ -56,10 +44,10 @@ class Spacenet2(RawGeoFMDataset):
             classes (list): classes of the dataset.
             num_classes (int): number of classes.
             ignore_index (int): index to ignore for metrics and loss.
-            img_size (int): size of the image. 
+            img_size (int): size of the image.
             bands (dict[str, list[str]]): bands of the dataset.
             distribution (list[int]): class distribution.
-            data_mean (dict[str, list[str]]): mean for each band for each modality. 
+            data_mean (dict[str, list[str]]): mean for each band for each modality.
             Dictionary with keys as the modality and values as the list of means.
             e.g. {"s2": [b1_mean, ..., bn_mean], "s1": [b1_mean, ..., bn_mean]}
             data_std (dict[str, list[str]]): str for each band for each modality.
@@ -113,15 +101,18 @@ class Spacenet2(RawGeoFMDataset):
         self.image_list = []
         self.target_list = []
 
-
-
-        self.tiles = self.get_train_val_test_split(sorted(self.root_path.glob('labels/*')))
+        self.tiles = self.get_train_val_test_split(
+            sorted(self.root_path.glob("labels/*"))
+        )
 
         for tile in self.tiles[self.split]:
             tile_name = str(pathlib.Path(tile).stem)
-            tile_number = tile_name.split('_')[-1]
-            tile_aoi = '_'.join(tile_name.split("_")[:-1])
-            image_path = self.root_path / f"{tile_aoi}/PS-RGB/SN2_buildings_train_{tile_aoi}_PS-RGB_{tile_number}.tif"
+            tile_number = tile_name.split("_")[-1]
+            tile_aoi = "_".join(tile_name.split("_")[:-1])
+            image_path = (
+                self.root_path
+                / f"{tile_aoi}/PS-RGB/SN2_buildings_train_{tile_aoi}_PS-RGB_{tile_number}.tif"
+            )
             if image_path.exists():
                 self.target_list.append(tile)
                 self.image_list.append(image_path)
@@ -132,25 +123,24 @@ class Spacenet2(RawGeoFMDataset):
         return len(self.image_list)
 
     def __getitem__(self, index):
-
         image_path = self.image_list[index]
-        with rasterio.open(image_path, mode='r') as src:
+        with rasterio.open(image_path, mode="r") as src:
             image = src.read()
         image = torch.from_numpy(image.astype(np.float32))
 
         # images must be of shape (C T H W)
         image = image.unsqueeze(1)
 
-        with rasterio.open(self.target_list[index], mode='r') as src:
+        with rasterio.open(self.target_list[index], mode="r") as src:
             target = src.read(1)
         target = torch.from_numpy(target.astype(np.int64))
 
         output = {
-            'image': {
-                'optical': image,
+            "image": {
+                "optical": image,
             },
-            'target': target,
-            'metadata': {"id": str(self.tiles[self.split][index].stem)}
+            "target": target,
+            "metadata": {"id": str(self.tiles[self.split][index].stem)},
         }
 
         return output

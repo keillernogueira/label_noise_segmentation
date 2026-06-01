@@ -33,7 +33,7 @@ class Trainer:
         eval_interval: int,
         log_interval: int,
         best_metric_key: str,
-        schedule_wd: bool,
+        # schedule_wd: bool,
     ):
         """Initialize the Trainer.
 
@@ -71,7 +71,7 @@ class Trainer:
         self.eval_interval = eval_interval
         self.log_interval = log_interval
         self.best_metric_key = best_metric_key
-        self.schedule_wd = schedule_wd
+        self.schedule_wd = False
 
         self.training_stats = {
             name: RunningAverageMeter(length=self.batch_per_epoch)

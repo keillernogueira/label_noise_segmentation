@@ -40,36 +40,6 @@ class DCC(RawGeoFMDataset):
         auto_download: bool,
         subset: int,
     ):
-        """Initialize the MADOS dataset.
-        Link: https://marine-pollution.github.io/index.html
-
-        Args:
-            split (str): split of the dataset (train, val, test).
-            dataset_name (str): dataset name.
-            multi_modal (bool): if the dataset is multi-modal.
-            multi_temporal (int): number of temporal frames.
-            root_path (str): root path of the dataset.
-            classes (list): classes of the dataset.
-            num_classes (int): number of classes.
-            ignore_index (int): index to ignore for metrics and loss.
-            img_size (int): size of the image.
-            bands (dict[str, list[str]]): bands of the dataset.
-            distribution (list[int]): class distribution.
-            data_mean (dict[str, list[str]]): mean for each band for each modality.
-            Dictionary with keys as the modality and values as the list of means.
-            e.g. {"s2": [b1_mean, ..., bn_mean], "s1": [b1_mean, ..., bn_mean]}
-            data_std (dict[str, list[str]]): str for each band for each modality.
-            Dictionary with keys as the modality and values as the list of stds.
-            e.g. {"s2": [b1_std, ..., bn_std], "s1": [b1_std, ..., bn_std]}
-            data_min (dict[str, list[str]]): min for each band for each modality.
-            Dictionary with keys as the modality and values as the list of mins.
-            e.g. {"s2": [b1_min, ..., bn_min], "s1": [b1_min, ..., bn_min]}
-            data_max (dict[str, list[str]]): max for each band for each modality.
-            Dictionary with keys as the modality and values as the list of maxs.
-            e.g. {"s2": [b1_max, ..., bn_max], "s1": [b1_max, ..., bn_max]}
-            download_url (str): url to download the dataset.
-            auto_download (bool): whether to download the dataset automatically.
-        """
         super().__init__(
             split=split,
             dataset_name=dataset_name,

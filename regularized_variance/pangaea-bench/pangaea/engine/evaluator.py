@@ -221,7 +221,7 @@ class SegEvaluator(Evaluator):
             (self.num_classes, self.num_classes), device=self.device
         )
 
-        if model_name in ["checkpoint__best", "final_model"]
+        if model_name in ["checkpoint__best", "final_model"]:
             out_path = pathlib.Path(self.exp_dir) / "outputs" / model_name / "dcc"
             out_path.mkdir(parents=True, exist_ok=True)
 
@@ -254,7 +254,7 @@ class SegEvaluator(Evaluator):
                 pred = torch.argmax(logits, dim=1)
                 pred_cont = torch.softmax(logits, dim=1)
 
-            if model_name in ["checkpoint__best", "final_model"]
+            if model_name in ["checkpoint__best", "final_model"]:
                 cv2.imwrite(
                     str(out_path / data["metadata"][0]["id"]) + "_float.png",
                     pred_cont.numpy(force=True)[0, 1] * 255,

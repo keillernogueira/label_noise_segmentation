@@ -66,7 +66,7 @@ dataset:
       - 255
       - 255
       - 255
-  subset: 2
+  subset: ???
 encoder:
   _target_: pangaea.encoders.scalemae_encoder.ScaleMAE_Encoder
   encoder_weights: ./pretrained_models/scalemae-vitlarge-800.pth
@@ -137,14 +137,14 @@ optimizer:
   weight_decay: 120.0
 train: true
 work_dir: work-dir/overregularized
-seed: 2
+seed: ???
 use_wandb: false
 num_workers: 8
 batch_size: 4
 test_num_workers: 4
 test_batch_size: 1
 finetune: false
-ckpt_dir: ?? # work-dir/finetuned/checkpoint__best.pth
+ckpt_dir: ??? # work-dir/finetuned/.../checkpoint__best.pth
 limited_label_train: 1
 limited_label_val: 1
 limited_label_strategy: stratified

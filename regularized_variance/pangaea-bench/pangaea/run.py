@@ -29,7 +29,7 @@ from pangaea.utils.utils import (
 )
 
 
-def get_exp_info(hydra_config: HydraConf) -> dict[str, str]:
+def get_exp_info(config_name: str, cfg: DictConfig) -> dict[str, str]:
     """Create a unique experiment name based on the choices made in the config.
 
     Args:
@@ -38,22 +38,14 @@ def get_exp_info(hydra_config: HydraConf) -> dict[str, str]:
     Returns:
         str: experiment information.
     """
-    choices = OmegaConf.to_container(hydra_config.runtime.choices)
     cfg_hash = hashlib.sha1(
-        OmegaConf.to_yaml(hydra_config).encode(), usedforsecurity=False
+        OmegaConf.to_yaml(cfg).encode(), usedforsecurity=False
     ).hexdigest()[:6]
     timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime())
-    fm = choices["encoder"]
-    decoder = choices["decoder"]
-    ds = choices["dataset"]
-    task = choices["task"]
     exp_info = {
         "timestamp": timestamp,
-        "fm": fm,
-        "decoder": decoder,
-        "ds": ds,
-        "task": task,
-        "exp_name": f"{timestamp}_{cfg_hash}_{fm}_{decoder}_{ds}",
+        "config_name": config_name,
+        "exp_name": f"{config_name}_{timestamp}_{cfg_hash}",
     }
     return exp_info
 
@@ -78,9 +70,9 @@ def main(cfg: DictConfig) -> None:
     # true if training else false
     train_run = cfg.train
     if train_run:
-        exp_info = get_exp_info(HydraConfig.get())
+        exp_info = get_exp_info(HydraConfig.get().job.config_name, cfg)
         exp_name = exp_info["exp_name"]
-        task_name = exp_info["task"]
+        task_name = "train"
         exp_dir = pathlib.Path(cfg.work_dir) / exp_name
         exp_dir.mkdir(parents=True, exist_ok=True)
         logger_path = exp_dir / "train.log"
