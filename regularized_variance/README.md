@@ -34,7 +34,7 @@ cd ..
 python3 convert_spacenet.py`
 ```
 
-###Training:
+### Training:
 
 Tune ScaleMAE on SpaceNet2 by running a Pangaea training with the right config:
 
